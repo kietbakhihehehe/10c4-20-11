@@ -1,0 +1,801 @@
+const $ = (s) => document.querySelector(s),
+  $$ = (s) => [...document.querySelectorAll(s)],
+  E = (t, c, x) => {
+    const e = document.createElement(t);
+    if (c) e.className = c;
+    if (x != null) e.textContent = x;
+    return e;
+  };
+const NAMES =
+  "LÊ SỸ ĐỨC ANH|NGUYỄN HOÀNG ANH|NGUYỄN THỊ QUỲNH ANH|TRẦN GIA BẢO|VÕ GIA BẢO|VÕ QUỐC BẢO|DƯƠNG NGỌC BÌNH|NGUYỄN CAO CƯỜNG|LA KHÁNH DUY|HUỲNH TẤN ĐẠT|LÊ THỊ MỸ HẠNH|TRẦN NGỌC MINH HẰNG|PHAN NGỌC HÂN|BÙI THỊ HƯƠNG HOA|PHẠM QUỲNH HƯƠNG|ĐOÀN HOÀNG KHANG|HÀ GIA KHÔI|NGUYỄN TUẤN KIỆT|HUỲNH NGỌC THIÊN KIM|VÕ THÙY LINH|LƯU MINH NAM|NGUYỄN HỒ PHƯƠNG NGA|LÝ THỊ HỒNG NGỌC|NGUYỄN LƯƠNG NGỌC|NGUYỄN THỊ BÍCH NGỌC|LÊ THÀNH NGUYÊN|HUỲNH NGỌC NHI|HUỲNH THANH NHIÊN|NGUYỄN THỊ QUỲNH NHƯ|NGUYỄN HỮU PHƯỚC|BÙI HỮU THẮNG|LÊ NGỌC THU|LÊ THANH TIÊN|VŨ THỊ THÙY TRÂM|LÊ THỊ THANH TRÚC|NGUYỄN NGỌC MỸ UYÊN|TRẦN KIM VÀNG|HÀ THÚY VY|LÊ THỊ TRƯỜNG VY|NGUYỄN NGỌC ÁI VY|TRẦN KHÁNH VY|VÕ ĐỖ THIÊN VY|NGUYỄN KỲ PHƯƠNG Y|VÕ NHƯ Ý".split(
+    "|",
+  );
+const ENV = [
+  {
+    n: "LỜI CẢM ƠN",
+    t: "Kính gửi quý thầy cô kính yêu! Chúng em xin gửi đến thầy cô lời cảm ơn chân thành nhất. Cảm ơn thầy cô đã luôn tận tụy, kiên nhẫn và dành hết tâm huyết để dìu dắt chúng em trên con đường tri thức. Kính chúc thầy cô luôn mạnh khỏe, hạnh phúc và giữ mãi ngọn lửa yêu nghề.",
+  },
+  {
+    n: "LỜI CHÚC YÊU THƯƠNG",
+    t: "Nhân ngày Nhà giáo Việt Nam 20/11, tập thể 10C4 kính chúc quý thầy cô luôn vui vẻ, bình an và tràn đầy năng lượng. Mong rằng mỗi ngày đến trường đều là một ngày hạnh phúc, mỗi bài giảng đều gieo thêm những hạt giống tri thức và hy vọng.",
+  },
+  {
+    n: "NGƯỜI LÁI ĐÒ THẦM LẶNG",
+    t: "Có những người không đi cùng chúng em suốt cuộc đời, nhưng lại để lại những bài học theo chúng em mãi mãi. Thầy cô chính là những người như thế. Cảm ơn thầy cô đã chắp cánh ước mơ và giúp chúng em trưởng thành hơn từng ngày.",
+  },
+  {
+    n: "MÓN QUÀ TỪ 10C4",
+    t: "Chúng em biết rằng không món quà nào có thể đáp lại hết những hy sinh và tình yêu thương mà thầy cô đã dành cho học trò. Nhưng bằng tất cả sự chân thành, chúng em xin gửi đến thầy cô những lời chúc tốt đẹp nhất. Chúc thầy cô luôn hạnh phúc với sự nghiệp trồng người cao quý.",
+  },
+  {
+    n: "GỬI THẦY ĐINH NGỌC ÁNH",
+    sp: 1,
+    t: "Kính gửi thầy Đinh Ngọc Ánh!\nNhân ngày Nhà giáo Việt Nam 20/11, tập thể lớp 10C4 xin gửi đến thầy những tình cảm và lời tri ân chân thành nhất.\nCảm ơn thầy vì sự tận tâm, những bài học quý giá và những điều tốt đẹp mà thầy đã dành cho chúng em.\nCó thể chúng em chưa phải là những học trò hoàn hảo, đôi khi còn nghịch ngợm và chưa thật sự trưởng thành, nhưng chúng em luôn trân trọng những điều thầy đã dạy bảo.\nKính chúc thầy thật nhiều sức khỏe, niềm vui và luôn giữ được nhiệt huyết với nghề giáo.\nMong rằng những kỷ niệm đẹp của thầy và tập thể 10C4 sẽ luôn được lưu giữ trong trái tim mỗi chúng em.\nTập thể lớp 10C4 kính gửi thầy!",
+  },
+];
+
+let P = {
+  m: {},
+  msg: {},
+  class: [],
+  friends: [],
+  logo: {},
+  bg: null,
+  music: null,
+  video: null,
+  yt: null,
+  cover: null,
+};
+let ready = false;
+const toast = (m, ms = 3200) => {
+  const t = $("#toast");
+  t.textContent = m;
+  t.style.display = "block";
+  clearTimeout(toast.i);
+  toast.i = setTimeout(() => (t.style.display = "none"), ms);
+};
+/* storage: IndexedDB (ảnh/video/nhạc) – lưu trên trình duyệt này */
+const dbp = new Promise((res, rej) => {
+  try {
+    const r = indexedDB.open("tri-an-10c4", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("kv");
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  } catch (e) {
+    rej(e);
+  }
+});
+const kv = (m, k, v) =>
+  dbp.then(
+    (d) =>
+      new Promise((res, rej) => {
+        const s = d
+          .transaction("kv", m === "get" ? "readonly" : "readwrite")
+          .objectStore("kv");
+        const q = m === "get" ? s.get(k) : s.put(v, k);
+        q.onsuccess = () => res(q.result);
+        q.onerror = () => rej(q.error);
+      }),
+  );
+let warned = 0;
+const save = () =>
+  kv("put", "p", P).catch(() => {
+    if (!warned++)
+      toast(
+        "Trình duyệt không cho lưu lâu dài – ảnh chỉ tồn tại đến khi đóng trang.",
+        5000,
+      );
+  });
+const U = new WeakMap(),
+  url = (b) => {
+    if (!b) return "";
+    if (!U.has(b)) U.set(b, URL.createObjectURL(b));
+    return U.get(b);
+  };
+const shrink = (f) =>
+  new Promise((ok, no) => {
+    const i = new Image(),
+      u = URL.createObjectURL(f);
+    i.onload = () => {
+      const s = Math.min(1, 1500 / Math.max(i.width, i.height)),
+        c = document.createElement("canvas");
+      c.width = Math.round(i.width * s);
+      c.height = Math.round(i.height * s);
+      c.getContext("2d").drawImage(i, 0, 0, c.width, c.height);
+      c.toBlob(
+        (b) => {
+          URL.revokeObjectURL(u);
+          b ? ok(b) : no();
+        },
+        "image/jpeg",
+        0.86,
+      );
+    };
+    i.onerror = () => {
+      URL.revokeObjectURL(u);
+      no();
+    };
+    i.src = u;
+  });
+async function addTo(arr, files, replace) {
+  let n = 0;
+  for (const f of files) {
+    if (!f.type.startsWith("image/")) {
+      toast("Bỏ qua tệp không phải ảnh: " + f.name);
+      continue;
+    }
+    try {
+      const b = await shrink(f);
+      if (replace && arr.length) {
+        arr[0] = { b, c: arr[0].c || "" };
+      } else arr.push({ b, c: "" });
+      n++;
+    } catch {
+      toast("Không đọc được ảnh " + f.name);
+    }
+  }
+  if (n) {
+    save();
+    render();
+    toast("Đã thêm " + n + " ảnh ✓");
+  }
+}
+const pick = (multi, cb) => {
+  const i = document.createElement("input");
+  i.type = "file";
+  i.accept = "image/*";
+  i.multiple = multi;
+  i.onchange = () => i.files.length && cb([...i.files]);
+  i.click();
+};
+
+/* hero */
+const T = "TRI ÂN THẦY CÔ";
+$("#title").innerHTML = [...T]
+  .map((c, i) =>
+    c == " "
+      ? " "
+      : `<span style="animation-delay:${0.3 + i * 0.09}s">${c}</span>`,
+  )
+  .join("");
+for (let i = 0; i < 14; i++) {
+  const p = E("div", "petal");
+  p.style.cssText = `left:${Math.random() * 100}vw;animation-duration:${9 + Math.random() * 10}s;animation-delay:${-Math.random() * 14}s;transform:scale(${0.6 + Math.random() * 0.8})`;
+  document.body.appendChild(p);
+}
+const PLAYLIST = [
+  {
+    title: "Người gieo mầm xanh",
+    src: "sound/NguoiGieoMamXanh.mp3",
+  },
+  {
+    title: "Pháo hoa",
+    src: "sound/PhaoHoa.mp3",
+  },
+];
+let curTrack = 0;
+
+const au = $("#au");
+const discBtn = $("#discBtn");
+const discIcon = $("#discIcon");
+const playIcon = $("#playIcon");
+const songTitle = $("#songTitle");
+const mp = $("#mp");
+
+const seek = $("#seek");
+const curTime = $("#curTime");
+const durTime = $("#durTime");
+let isSeeking = false;
+
+const fmtTime = (s) => {
+  if (isNaN(s) || s < 0) return "0:00";
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+};
+
+function setTrack(idx, autoPlay = true) {
+  curTrack = (idx + PLAYLIST.length) % PLAYLIST.length;
+  const track = PLAYLIST[curTrack];
+  au.src = track.src;
+  if (songTitle) {
+    songTitle.textContent = track.title;
+    songTitle.style.animation = "none";
+    void songTitle.offsetWidth;
+    songTitle.style.animation = "";
+  }
+  if (seek) seek.value = 0;
+  if (curTime) curTime.textContent = "0:00";
+  if (durTime) durTime.textContent = "0:00";
+  if (autoPlay) {
+    play();
+  } else {
+    setPlay(false);
+  }
+}
+
+function setPlay(on) {
+  if (playIcon) {
+    playIcon.className = on ? "fa-solid fa-pause" : "fa-solid fa-play";
+  }
+  if (discIcon) {
+    discIcon.classList.toggle("spin", on);
+  }
+  if (mp) {
+    mp.classList.toggle("on", on);
+  }
+}
+
+async function play() {
+  try {
+    if (!au.src || au.src.endsWith("#") || au.src === window.location.href) {
+      au.src = PLAYLIST[curTrack].src;
+    }
+    if (songTitle) songTitle.textContent = PLAYLIST[curTrack].title;
+    await au.play();
+    setPlay(true);
+  } catch {
+    setPlay(false);
+    toast("Nhấn vào đĩa nhạc để bật âm thanh", 3000);
+  }
+}
+
+if ($("#pp")) {
+  $("#pp").onclick = () => (au.paused ? play() : (au.pause(), setPlay(false)));
+}
+
+if ($("#mPrev")) {
+  $("#mPrev").onclick = () => setTrack(curTrack - 1, true);
+}
+
+if ($("#mNext")) {
+  $("#mNext").onclick = () => setTrack(curTrack + 1, true);
+}
+
+if (discBtn) {
+  discBtn.onclick = () => {
+    if (mp.classList.contains("collapsed")) {
+      mp.classList.remove("collapsed");
+    } else {
+      mp.classList.add("collapsed");
+    }
+  };
+}
+
+if ($("#mpToggle")) {
+  $("#mpToggle").onclick = () => {
+    mp.classList.add("collapsed");
+  };
+}
+
+au.ontimeupdate = () => {
+  if (isSeeking) return;
+  if (au.duration) {
+    const pct = (au.currentTime / au.duration) * 100;
+    if (seek) seek.value = pct;
+    if (curTime) curTime.textContent = fmtTime(au.currentTime);
+    if (durTime) durTime.textContent = fmtTime(au.duration);
+  }
+};
+
+au.onloadedmetadata = () => {
+  if (durTime && au.duration) {
+    durTime.textContent = fmtTime(au.duration);
+  }
+};
+
+if (seek) {
+  seek.oninput = () => {
+    isSeeking = true;
+    if (au.duration) {
+      const time = (seek.value / 100) * au.duration;
+      if (curTime) curTime.textContent = fmtTime(time);
+    }
+  };
+  seek.onchange = () => {
+    if (au.duration) {
+      au.currentTime = (seek.value / 100) * au.duration;
+    }
+    isSeeking = false;
+  };
+}
+
+au.onended = () => {
+  setTrack(curTrack + 1, true);
+};
+
+if ($("#start")) {
+  $("#start").onclick = () => {
+    $("#class").scrollIntoView({ behavior: "smooth" });
+    if (au.paused) {
+      play();
+      if (mp) mp.classList.remove("collapsed");
+    }
+  };
+}
+function setBg() {
+  if (P.bg) $("#hbg").style.backgroundImage = `url(${url(P.bg)})`;
+  $$("button.logo[data-l]").forEach((l) => {
+    const b = P.logo[l.dataset.l];
+    l.style.backgroundImage = b ? `url(${url(b)})` : "";
+    l.textContent = b
+      ? ""
+      : l.textContent ||
+        (l.dataset.l == "school" ? "LOGO TRƯỜNG" : "LOGO ĐOÀN");
+  });
+}
+const bgf = $("#bgf");
+if (bgf) {
+  bgf.onchange = async (e) => {
+    try {
+      P.bg = await shrink(e.target.files[0]);
+      save();
+      setBg();
+      toast("Đã đổi ảnh nền ✓");
+    } catch {
+      toast("Không đọc được ảnh");
+    }
+  };
+}
+$$("button.logo[data-l]").forEach(
+  (l) =>
+    (l.onclick = () =>
+      pick(false, async (f) => {
+        try {
+          P.logo[l.dataset.l] = await shrink(f[0]);
+          l.textContent = "";
+          save();
+          setBg();
+        } catch {
+          toast("Không đọc được ảnh");
+        }
+      })),
+);
+
+/* lightbox */
+let LB = { a: [], i: 0 };
+const open = (a, i) => {
+  LB = { a, i };
+  drawLB();
+};
+function setModalScrollLock() {
+  const isLbOpen = $("#lb") && !$("#lb").hidden;
+  const isLetterOpen = $("#letter") && !$("#letter").hidden;
+  const lock = Boolean(isLbOpen || isLetterOpen);
+  document.documentElement.classList.toggle("no-scroll", lock);
+  document.body.classList.toggle("no-scroll", lock);
+}
+
+function drawLB() {
+  const l = $("#lb");
+  if (!LB.a.length) {
+    l.hidden = true;
+    setModalScrollLock();
+    return;
+  }
+  LB.i = (LB.i + LB.a.length) % LB.a.length;
+  const p = LB.a[LB.i];
+  l.hidden = false;
+  setModalScrollLock();
+  $("#lbi").src = p.src || (p.b ? url(p.b) : "");
+  $("#lbc").textContent = p.c || "";
+
+  const hasMultiple = LB.a.length > 1;
+  const lp = $("#lp");
+  const ln = $("#ln");
+  if (lp) lp.style.display = hasMultiple ? "grid" : "none";
+  if (ln) ln.style.display = hasMultiple ? "grid" : "none";
+}
+
+if ($("#lp")) {
+  $("#lp").onclick = (e) => {
+    e.stopPropagation();
+    LB.i--;
+    drawLB();
+  };
+}
+if ($("#ln")) {
+  $("#ln").onclick = (e) => {
+    e.stopPropagation();
+    LB.i++;
+    drawLB();
+  };
+}
+if ($("#lx2")) {
+  $("#lx2").onclick = (e) => {
+    e.stopPropagation();
+    $("#lb").hidden = true;
+    setModalScrollLock();
+  };
+}
+
+addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    if ($("#lb") && !$("#lb").hidden) {
+      $("#lb").hidden = true;
+      setModalScrollLock();
+    }
+  }
+  if ($("#lb") && !$("#lb").hidden) {
+    if (e.key === "ArrowLeft" && LB.a.length > 1) {
+      LB.i--;
+      drawLB();
+    }
+    if (e.key === "ArrowRight" && LB.a.length > 1) {
+      LB.i++;
+      drawLB();
+    }
+  }
+});
+
+/* albums */
+function album(key) {
+  const box = $("#g-" + key);
+  if (!box) return;
+  box.replaceChildren();
+
+  if (key === "friends") {
+    const defaultFriends = Array.from({ length: 8 }, (_, idx) => {
+      const num = idx + 1;
+      return {
+        b: null,
+        src: encodeURI(`img/AnhTapThe/AnhTapThe (${num}).jpg`),
+        c: `Kỷ niệm tập thể 10C4 · Ảnh ${num}`,
+      };
+    });
+    const list = P.friends && P.friends.length ? P.friends : defaultFriends;
+    list.forEach((p, i) => {
+      const f = E("figure");
+      const im = E("img");
+      im.src = p.src || url(p.b);
+      im.loading = "lazy";
+      im.alt = p.c || "Kỷ niệm 10C4";
+      f.append(im, E("figcaption", null, p.c || "Kỷ niệm 10C4"));
+      f.onclick = () => open(list, i);
+      box.appendChild(f);
+    });
+    return;
+  }
+
+  if (!P[key].length) {
+    box.appendChild(
+      E(
+        "p",
+        "intro",
+        "Chưa có ảnh. Hãy thêm những khoảnh khắc đầu tiên.",
+      ),
+    );
+    return;
+  }
+  P[key].forEach((p, i) => {
+    const f = E("figure");
+    const im = E("img");
+    im.src = p.src || url(p.b);
+    im.loading = "lazy";
+    im.alt = p.c || "Ảnh kỷ niệm";
+    if (i == 0 && key == "class") f.style.columnSpan = "none";
+    f.append(im, E("figcaption", null, p.c || "Kỷ niệm 10C4"));
+    f.onclick = () => open(P[key], i);
+    box.appendChild(f);
+  });
+}
+$$(".drop").forEach((d) => {
+  const k = d.dataset.a,
+    inp = d.querySelector("input");
+  inp.onchange = () => {
+    addTo(P[k], [...inp.files]);
+    inp.value = "";
+  };
+  d.ondragover = (e) => {
+    e.preventDefault();
+    d.classList.add("over");
+  };
+  d.ondragleave = () => d.classList.remove("over");
+  d.ondrop = (e) => {
+    e.preventDefault();
+    d.classList.remove("over");
+    addTo(P[k], [...e.dataTransfer.files]);
+  };
+});
+
+/* members */
+const norm = (s) =>
+  s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/gi, "d")
+    .toLowerCase();
+
+const nameToFilename = (name) =>
+  name
+    .replace(/Đ/g, "D")
+    .replace(/đ/g, "d")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join("") + ".jpg";
+
+const io = new IntersectionObserver(
+  (es) =>
+    es.forEach((e) => {
+      if (e.isIntersecting) {
+        e.target.classList.add("in");
+        io.unobserve(e.target);
+      }
+    }),
+  { rootMargin: "0px 0px -40px" },
+);
+function members() {
+  const g = $("#grid");
+  g.replaceChildren();
+  const allMemberPhotos = NAMES.map((nm, k) => {
+    const n = k + 1;
+    const arr = P.m[n];
+    if (arr && arr.length) {
+      return {
+        b: arr[0].b,
+        c: `${String(n).padStart(2, "0")} · ${nm}`,
+        src: url(arr[0].b),
+      };
+    }
+    const filename = nameToFilename(nm);
+    return {
+      b: null,
+      c: `${String(n).padStart(2, "0")} · ${nm}`,
+      src: encodeURI(`img/${filename}`),
+    };
+  });
+
+  NAMES.forEach((nm, k) => {
+    const n = k + 1,
+      arr = P.m[n] || (P.m[n] = []),
+      c = E("div", "pol");
+    c.dataset.s = norm(nm);
+    c.appendChild(E("span", "n", String(n).padStart(2, "0")));
+    const ph = E("div", "ph");
+    const filename = nameToFilename(nm);
+    const defaultImg = encodeURI(`img/${filename}`);
+    if (arr.length) {
+      ph.style.backgroundImage = `url("${url(arr[0].b)}")`;
+      if (arr.length > 1)
+        ph.appendChild(E("em", null, "+" + (arr.length - 1)));
+    } else {
+      ph.style.backgroundImage = `url("${defaultImg}")`;
+    }
+    ph.onclick = () => open(allMemberPhotos, k);
+    c.appendChild(ph);
+    c.appendChild(E("h3", null, nm));
+    const m = E("div", "m", P.msg[n] || "Thanh xuân có bạn.");
+    m.title = "Bấm để sửa lời nhắn";
+    m.onclick = () => {
+      const v = prompt("Lời nhắn (ngắn):", P.msg[n] || "");
+      if (v !== null) {
+        P.msg[n] = v.slice(0, 60);
+        save();
+        m.textContent = P.msg[n] || "Thanh xuân có bạn.";
+      }
+    };
+    c.appendChild(m);
+    if (arr.length) {
+      const a = E("div", "acts");
+      const B = (t, f) => {
+        const b = E("button", null, t);
+        b.onclick = f;
+        a.appendChild(b);
+      };
+      B("Thay", () => pick(false, (f) => addTo(arr, f, true)));
+      B("Đặt lại", () => {
+        if (confirm("Khôi phục ảnh gốc của " + nm + "?")) {
+          delete P.m[n];
+          save();
+          render();
+        }
+      });
+      c.appendChild(a);
+    }
+    g.appendChild(c);
+    io.observe(c);
+  });
+}
+
+/* video */
+function yid(u) {
+  const m = u.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/);
+  return m && m[1];
+}
+function video() {
+  const b = $("#vbox");
+  if (!b) return;
+  if (P.video) {
+    b.replaceChildren();
+    const v = E("video");
+    v.controls = true;
+    v.playsInline = true;
+    v.src = url(P.video);
+    if (P.cover) v.poster = url(P.cover);
+    b.appendChild(v);
+  } else if (P.yt) {
+    b.replaceChildren();
+    const f = E("iframe");
+    f.src = "https://www.youtube-nocookie.com/embed/" + P.yt;
+    f.allow =
+      "accelerometer;encrypted-media;picture-in-picture;fullscreen";
+    f.allowFullscreen = true;
+    f.title = "Video kỷ niệm";
+    b.appendChild(f);
+  } else {
+    if (!b.querySelector("video")) {
+      b.replaceChildren();
+      const v = E("video");
+      v.controls = true;
+      v.playsInline = true;
+      v.preload = "metadata";
+      v.src = "img/video.mp4";
+      if (P.cover) v.poster = url(P.cover);
+      b.appendChild(v);
+    }
+  }
+}
+const vf = $("#vf");
+if (vf) {
+  vf.onchange = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    if (!/^video\/(mp4|webm)$/.test(f.type)) {
+      toast("Chỉ hỗ trợ MP4 hoặc WebM");
+      return;
+    }
+    P.video = f;
+    P.yt = null;
+    save();
+    video();
+    toast("Đã thêm video ✓");
+  };
+}
+const vc = $("#vc");
+if (vc) {
+  vc.onchange = async (e) => {
+    try {
+      P.cover = await shrink(e.target.files[0]);
+      save();
+      video();
+      toast("Đã đặt ảnh bìa ✓");
+    } catch {
+      toast("Không đọc được ảnh");
+    }
+  };
+}
+const ytb = $("#ytb");
+if (ytb) {
+  ytb.onclick = () => {
+    const id = yid($("#yt").value);
+    if (!id) {
+      toast("Link YouTube không hợp lệ");
+      return;
+    }
+    P.yt = id;
+    P.video = null;
+    save();
+    video();
+  };
+}
+const vdel = $("#vdel");
+if (vdel) {
+  vdel.onclick = () => {
+    if (!P.video && !P.yt) {
+      toast("Chưa có video để xóa");
+      return;
+    }
+    if (confirm("Xóa video?")) {
+      P.video = P.yt = null;
+      save();
+      video();
+    }
+  };
+}
+
+/* envelopes */
+let tw;
+ENV.forEach((e, i) => {
+  if (e.sp) {
+    const br = E("div", "env-break");
+    $("#envrow").appendChild(br);
+  }
+  const b = E("button", "env" + (e.sp ? " special" : ""));
+  b.setAttribute("aria-label", "Mở phong bì " + e.n);
+  b.innerHTML =
+    '<div class="body"></div><div class="seal">❀</div><div class="flap"></div><div class="lab"></div>';
+  b.querySelector(".lab").textContent = e.n;
+  b.onclick = () => {
+    b.classList.add("open");
+    setTimeout(() => {
+      $("#lt").textContent = e.n;
+      const x = $("#lx");
+      x.textContent = "";
+      $("#letter").hidden = false;
+      setModalScrollLock();
+      let k = 0;
+      clearInterval(tw);
+      tw = setInterval(() => {
+        x.textContent = e.t.slice(0, ++k);
+        x.scrollTop = x.scrollHeight;
+        if (k >= e.t.length) clearInterval(tw);
+      }, 28);
+      b.classList.remove("open");
+    }, 800);
+  };
+  $("#envrow").appendChild(b);
+});
+
+const closeLetter = () => {
+  clearInterval(tw);
+  $("#letter").hidden = true;
+  setModalScrollLock();
+};
+if ($("#lclose")) $("#lclose").onclick = closeLetter;
+if ($("#letterX")) $("#letterX").onclick = closeLetter;
+
+/* nav */
+const burger = $("#burger");
+if (burger) burger.onclick = () => $("#menu").classList.toggle("open");
+$$("#menu a").forEach(
+  (a) => (a.onclick = () => $("#menu").classList.remove("open")),
+);
+const topBtn = $("#top");
+if (topBtn) topBtn.onclick = () => scrollTo({ top: 0, behavior: "smooth" });
+addEventListener(
+  "scroll",
+  () => {
+    const h = document.documentElement,
+      s = h.scrollTop;
+    $("#prog").style.width =
+      (s / (h.scrollHeight - h.clientHeight)) * 100 + "%";
+    if (topBtn) topBtn.style.display = s > 600 ? "block" : "none";
+  },
+  { passive: true },
+);
+const so = new IntersectionObserver(
+  (es) =>
+    es.forEach((e) => {
+      if (e.isIntersecting)
+        $$("#menu a").forEach((a) =>
+          a.classList.toggle(
+            "on",
+            a.getAttribute("href") == "#" + e.target.id,
+          ),
+        );
+    }),
+  { rootMargin: "-45% 0px -50% 0px" },
+);
+[
+  "hero",
+  "class",
+  "members",
+  "friends",
+  "video",
+  "envs",
+].forEach((id) => {
+  const el = $("#" + id);
+  if (el) so.observe(el);
+});
+
+function render() {
+  setBg();
+  album("class");
+  album("friends");
+  members();
+  video();
+}
+render();
+kv("get", "p")
+  .then((v) => {
+    if (v) {
+      P = Object.assign(P, v);
+      P.logo = P.logo || {};
+      render();
+    }
+  })
+  .catch(() => {});
+
